@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Card Quality Assessment</title>
+    <link rel="stylesheet" href="/static/index.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>ID Card Quality Assessment</h1>
+
+        <!-- Upload Zone -->
+        <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
+            <p>Drag & drop an image here<br>or click to browse</p>
+            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" hidden>
+        </div>
+
+        <!-- Analyze Button -->
+        <button id="analyzeBtn" class="btn" disabled>Analyze</button>
+
+        <!-- Image Previews -->
+        <div id="imagePanel" class="image-panel" style="display:none;">
+            <div class="image-box">
+                <h3>Original</h3>
+                <img id="originalPreview" src="" alt="Original">
+            </div>
+            <div class="image-box">
+                <h3>Detected</h3>
+                <img id="processedPreview" src="" alt="Processed">
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading" style="display:none;">
+            Processing...
+        </div>
+
+        <!-- Dev Info Panel -->
+        <div id="infoPanel" class="info-panel" style="display:none;">
+            <h3>Dev Info</h3>
+            <div class="info-grid">
+                <div class="info-row">
+                    <span class="info-label">Image Width</span>
+                    <span id="imgWidth" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Image Height</span>
+                    <span id="imgHeight" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Long Edge</span>
+                    <span id="longEdge" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Short Edge</span>
+                    <span id="shortEdge" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Resolution Adequate</span>
+                    <span id="resAdequate" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Card Detected</span>
+                    <span id="cardDetected" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Aspect Ratio Deviation</span>
+                    <span id="aspectDev" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Card Area Ratio</span>
+                    <span id="areaRatio" class="info-value">—</span>
+                </div>
+            </div>
+            <!-- Error display -->
+            <div id="errorBox" class="error-box" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById("dropZone");
+        const fileInput = document.getElementById("fileInput");
+        const analyzeBtn = document.getElementById("analyzeBtn");
+        const imagePanel = document.getElementById("imagePanel");
+        const originalPreview = document.getElementById("originalPreview");
+        const processedPreview = document.getElementById("processedPreview");
+        const infoPanel = document.getElementById("infoPanel");
+        const loading = document.getElementById("loading");
+        const errorBox = document.getElementById("errorBox");
+
+        let selectedFile = null;
+
+        // --- Drag & Drop ---
+        dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZone.classList.add("drag-over");
+        });
+
+        dropZone.addEventListener("dragleave", () => {
+            dropZone.classList.remove("drag-over");
+        });
+
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("drag-over");
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // --- Click to browse ---
+        fileInput.addEventListener("change", () => {
+            if (fileInput.files.length > 0) {
+                handleFile(fileInput.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.type.match(/image\/(jpeg|jpg|png)/)) {
+                alert("Please upload a JPG or PNG image.");
+                return;
+            }
+            selectedFile = file;
+            analyzeBtn.disabled = false;
+            dropZone.querySelector("p").textContent = file.name;
+
+            // Show original preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalPreview.src = e.target.result;
+                imagePanel.style.display = "flex";
+                processedPreview.src = "";
+                processedPreview.alt = "Will appear after analysis";
+            };
+            reader.readAsDataURL(file);
+
+            // Reset info panel
+            infoPanel.style.display = "none";
+            errorBox.style.display = "none";
+        }
+
+        // --- Analyze ---
+        analyzeBtn.addEventListener("click", async () => {
+            if (!selectedFile) return;
+
+            analyzeBtn.disabled = true;
+            loading.style.display = "block";
+            errorBox.style.display = "none";
+
+            const formData = new FormData();
+            formData.append("image", selectedFile);
+
+            try {
+                const response = await fetch("/assess", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                // Show processed image
+                processedPreview.src = data.processed_image_url;
+
+                // Populate dev info
+                const res = data.resolution;
+                const card = data.card_detection;
+
+                setText("imgWidth", `${res.image_width} px`);
+                setText("imgHeight", `${res.image_height} px`);
+                setText("longEdge", `${res.long_edge} px`);
+                setText("shortEdge", `${res.short_edge} px`);
+
+                setStatus("resAdequate", res.resolution_adequate);
+                setStatus("cardDetected", card.card_detected);
+
+                setText("aspectDev",
+                    card.aspect_ratio_deviation !== null
+                        ? card.aspect_ratio_deviation.toFixed(4)
+                        : "—"
+                );
+                setText("areaRatio",
+                    card.card_area_ratio !== null
+                        ? card.card_area_ratio.toFixed(4)
+                        : "—"
+                );
+
+                infoPanel.style.display = "block";
+
+            } catch (err) {
+                showError("Request failed: " + err.message);
+            } finally {
+                loading.style.display = "none";
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        function setText(id, text) {
+            document.getElementById(id).textContent = text;
+        }
+
+        function setStatus(id, passed) {
+            const el = document.getElementById(id);
+            el.textContent = passed ? "YES" : "NO";
+            el.className = "info-value " + (passed ? "pass" : "fail");
+        }
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.style.display = "block";
+            infoPanel.style.display = "block";
+        }
+    </script>
+</body>
+
+</html>
