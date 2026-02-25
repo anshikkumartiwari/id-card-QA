@@ -42,6 +42,7 @@
         <div id="infoPanel" class="info-panel" style="display:none;">
             <h3>Dev Info</h3>
             <div class="info-grid">
+                <!-- Resolution -->
                 <div class="info-row">
                     <span class="info-label">Image Width</span>
                     <span id="imgWidth" class="info-value">—</span>
@@ -62,6 +63,8 @@
                     <span class="info-label">Resolution Adequate</span>
                     <span id="resAdequate" class="info-value">—</span>
                 </div>
+
+                <!-- Card Detection -->
                 <div class="info-row">
                     <span class="info-label">Card Detected</span>
                     <span id="cardDetected" class="info-value">—</span>
@@ -73,6 +76,34 @@
                 <div class="info-row">
                     <span class="info-label">Card Area Ratio</span>
                     <span id="areaRatio" class="info-value">—</span>
+                </div>
+
+                <!-- Face Detection -->
+                <div class="info-row">
+                    <span class="info-label">Face Detected</span>
+                    <span id="faceDetected" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Face BBox</span>
+                    <span id="faceBbox" class="info-value">—</span>
+                </div>
+
+                <!-- Blur / Focus -->
+                <div class="info-row">
+                    <span class="info-label">Blur Score (Global)</span>
+                    <span id="blurGlobal" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Blur Score (Card Zone)</span>
+                    <span id="blurCard" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Blur Score (Face Zone)</span>
+                    <span id="blurFace" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Blur Composite</span>
+                    <span id="blurComposite" class="info-value">—</span>
                 </div>
             </div>
             <!-- Error display -->
@@ -169,18 +200,17 @@
                 // Show processed image
                 processedPreview.src = data.processed_image_url;
 
-                // Populate dev info
+                // --- Populate Resolution info ---
                 const res = data.resolution;
-                const card = data.card_detection;
-
                 setText("imgWidth", `${res.image_width} px`);
                 setText("imgHeight", `${res.image_height} px`);
                 setText("longEdge", `${res.long_edge} px`);
                 setText("shortEdge", `${res.short_edge} px`);
-
                 setStatus("resAdequate", res.resolution_adequate);
-                setStatus("cardDetected", card.card_detected);
 
+                // --- Populate Card Detection info ---
+                const card = data.card_detection;
+                setStatus("cardDetected", card.card_detected);
                 setText("aspectDev",
                     card.aspect_ratio_deviation !== null
                         ? card.aspect_ratio_deviation.toFixed(4)
@@ -191,6 +221,26 @@
                         ? card.card_area_ratio.toFixed(4)
                         : "—"
                 );
+
+                // --- Populate Face detection info ---
+                const fce = data.face;
+                setStatus("faceDetected", fce.detected);
+                setText("faceBbox",
+                    fce.bbox !== null
+                        ? `(${fce.bbox.join(", ")})`
+                        : "—"
+                );
+
+                // --- Populate Blur info ---
+                const blr = data.blur || {};
+                setText("blurGlobal", blr.blur_score_global != null
+                    ? blr.blur_score_global.toFixed(2) : "—");
+                setText("blurCard", blr.blur_score_card_zone != null
+                    ? blr.blur_score_card_zone.toFixed(2) : "—");
+                setText("blurFace", blr.blur_score_face_zone != null
+                    ? blr.blur_score_face_zone.toFixed(2) : "—");
+                setText("blurComposite", blr.blur_composite != null
+                    ? blr.blur_composite.toFixed(2) : "—");
 
                 infoPanel.style.display = "block";
 

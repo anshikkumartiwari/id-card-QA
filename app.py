@@ -6,7 +6,7 @@ import numpy as np
 from flask import Flask, request, jsonify, render_template, send_from_directory
 
 from config import TEMP_FOLDER
-from modules import resolution, card_detection
+from pipeline import run_pipeline
 
 app = Flask(__name__)
 
@@ -23,7 +23,7 @@ def index():
 @app.route("/assess", methods=["POST"])
 def assess():
     """
-    Receive an uploaded image, run resolution + card detection,
+    Receive an uploaded image, run the full QA pipeline,
     save annotated image to temp/, return JSON results.
     """
     if "image" not in request.files:
@@ -41,30 +41,21 @@ def assess():
     if image_bgr is None:
         return jsonify({"error": "Could not decode image"}), 400
 
-    # --- Step 1: Resolution check ---
-    res_result = resolution.analyze(image_bgr)
+    # --- Run the full QA pipeline ---
+    results = run_pipeline(image_bgr)
 
-    # --- Step 2: Card detection ---
-    card_result = card_detection.detect(image_bgr)
-
-    # --- Draw bounding box if card detected ---
-    if card_result["card_detected"]:
-        annotated = card_detection.draw_bounding_box(
-            image_bgr, card_result["quadrilateral"]
-        )
-    else:
-        annotated = image_bgr.copy()
-
-    # --- Save processed image to temp/ ---
+    # --- Save annotated image to temp/ ---
     filename = f"{uuid.uuid4().hex}.jpg"
     filepath = os.path.join(TEMP_FOLDER, filename)
-    cv2.imwrite(filepath, annotated)
+    cv2.imwrite(filepath, results["annotated_image"])
 
-    # --- Build response ---
+    # --- Build response (everything except the numpy array) ---
     response = {
-        "resolution": res_result,
-        "card_detection": card_result,
-        "processed_image_url": f"/temp/{filename}"
+        "resolution": results["resolution"],
+        "card_detection": results["card_detection"],
+        "face": results["face"],
+        "blur": results["blur"],
+        "processed_image_url": f"/temp/{filename}",
     }
 
     return jsonify(response)

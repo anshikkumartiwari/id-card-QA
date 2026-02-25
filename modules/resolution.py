@@ -32,3 +32,12 @@ def analyze(image_bgr: np.ndarray) -> dict:
         "short_edge": int(short_edge),
         "resolution_adequate": bool(adequate)
     }
+
+
+# Example usage (reference):
+# import cv2
+# img = cv2.imread("/mnt/data/sample_id.jpg")
+# res = analyze(img)
+# print(res)
+# if not res["resolution_adequate"]:
+#     print("Image resolution too low for ID processing.")
