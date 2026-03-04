@@ -77,6 +77,10 @@
                     <span class="info-label">Card Area Ratio</span>
                     <span id="areaRatio" class="info-value">—</span>
                 </div>
+                <div class="info-row">
+                    <span class="info-label">Detection Confidence</span>
+                    <span id="cardConfidence" class="info-value">—</span>
+                </div>
 
                 <!-- Face Detection -->
                 <div class="info-row">
@@ -219,6 +223,11 @@
                 setText("areaRatio",
                     card.card_area_ratio !== null
                         ? card.card_area_ratio.toFixed(4)
+                        : "—"
+                );
+                setText("cardConfidence",
+                    card.confidence != null
+                        ? card.confidence.toFixed(4)
                         : "—"
                 );
 

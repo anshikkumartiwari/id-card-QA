@@ -13,7 +13,7 @@ THRESHOLDS = {
 
     # Structural priors (relative to card physical dims)
     # bottom colored strip thickness as fraction of card long-edge (height)
-    "bottom_band_rel_height": 10.0 / 89.5,   # ≈ 0.1117 (1 cm / 8.95 cm)
+    "bottom_band_rel_height": 10.0 / 89.5,   # ≈ 0.1117 (1 cm / 8.95 cm) blue band at bottom
     # side white margin usual width as fraction of card short-edge (width)
     "side_margin_rel_width": 5.0 / 54.0,     # ≈ 0.0926 (0.5 cm / 5.4 cm)
     # when margins go deeper (2nd state), width up to:

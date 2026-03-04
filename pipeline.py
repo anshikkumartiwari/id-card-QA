@@ -72,7 +72,8 @@ def run_pipeline(image_bgr: np.ndarray) -> dict:
     # ── Step 3: Annotated image ───────────────────────────────────────
     if card_result["card_detected"]:
         annotated = card_detection.draw_bounding_box(
-            image_bgr, card_result["quadrilateral"]
+            image_bgr, card_result["quadrilateral"],
+            score=card_result.get("confidence")
         )
     else:
         annotated = image_bgr.copy()
