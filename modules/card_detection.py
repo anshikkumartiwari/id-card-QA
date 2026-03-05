@@ -59,7 +59,7 @@ _PROCESSING_HEIGHTS = [500, 700, 1000]
 # ===================================================================
 
 def _order_points(pts):
-    """Order 4 points as TL, TR, BR, BL (robust version)."""
+    """Order 4 points as TL, TR, BR, BL """
     pts = np.array(pts, dtype="float32").reshape(4, 2)
     s = pts.sum(axis=1)
     d = np.diff(pts, axis=1).ravel()

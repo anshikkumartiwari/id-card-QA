@@ -92,6 +92,20 @@
                     <span id="faceBbox" class="info-value">—</span>
                 </div>
 
+                <!-- Glare -->
+                <div class="info-row">
+                    <span class="info-label">Glare Detected</span>
+                    <span id="glareDetected" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Glare Area (%)</span>
+                    <span id="glareScore" class="info-value">—</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Glare on Face</span>
+                    <span id="glareOnFace" class="info-value">—</span>
+                </div>
+
                 <!-- Blur / Focus -->
                 <div class="info-row">
                     <span class="info-label">Blur Score (Global)</span>
@@ -240,6 +254,14 @@
                         : "—"
                 );
 
+                // --- Populate Glare info ---
+                const glr = data.glare;
+                if (glr) {
+                    setIssueStatus("glareDetected", glr.glare_detected);
+                    setText("glareScore", glr.glare_percentage != null ? glr.glare_percentage.toFixed(2) + "%" : "—");
+                    setIssueStatus("glareOnFace", glr.glare_on_face);
+                }
+
                 // --- Populate Blur info ---
                 const blr = data.blur || {};
                 setText("blurGlobal", blr.blur_score_global != null
@@ -269,6 +291,12 @@
             const el = document.getElementById(id);
             el.textContent = passed ? "YES" : "NO";
             el.className = "info-value " + (passed ? "pass" : "fail");
+        }
+
+        function setIssueStatus(id, hasIssue) {
+            const el = document.getElementById(id);
+            el.textContent = hasIssue ? "YES" : "NO";
+            el.className = "info-value " + (hasIssue ? "fail" : "pass");
         }
 
         function showError(msg) {

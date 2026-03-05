@@ -55,6 +55,7 @@ def assess():
         "card_detection": results["card_detection"],
         "face": results["face"],
         "blur": results["blur"],
+        "glare": results["glare"],
         "processed_image_url": f"/temp/{filename}",
     }
 
