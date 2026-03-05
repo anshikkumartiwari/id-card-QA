@@ -4,167 +4,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ID Card Quality Assessment</title>
+    <title>ID Card QA — Quality Assessment</title>
+    <meta name="description" content="AI-powered ID card image quality assessment tool.">
     <link rel="stylesheet" href="/static/index.css">
 </head>
 
 <body>
-    <div class="container">
-        <h1>ID Card Quality Assessment</h1>
+    <div class="app-shell">
 
-        <!-- Upload Zone -->
-        <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
-            <p>Drag & drop an image here<br>or click to browse</p>
-            <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" hidden>
-        </div>
+        <!-- ── Header ──────────────────────────────────────────── -->
+        <header class="app-header">
+            <span class="logo-chip">QA</span>
+            <h1>ID Card Quality Assessment</h1>
+            <span class="subtitle">Machine Learning Project</span>
+        </header>
 
-        <!-- Analyze Button -->
-        <button id="analyzeBtn" class="btn" disabled>Analyze</button>
-
-        <!-- Image Previews -->
-        <div id="imagePanel" class="image-panel" style="display:none;">
-            <div class="image-box">
-                <h3>Original</h3>
-                <img id="originalPreview" src="" alt="Original">
+        <!-- ── Upload Row ──────────────────────────────────────── -->
+        <div class="upload-row">
+            <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
+                <p id="dropLabel">Drag &amp; drop an image here &nbsp;·&nbsp; or click to browse</p>
+                <input type="file" id="fileInput" accept=".jpg,.jpeg,.png" hidden>
             </div>
-            <div class="image-box">
-                <h3>Detected</h3>
-                <img id="processedPreview" src="" alt="Processed">
+            <button id="analyzeBtn" class="btn" disabled>Analyze</button>
+        </div>
+
+        <!-- ── Loading Bar ─────────────────────────────────────── -->
+        <div id="loadingBar" class="loading-bar"></div>
+
+        <!-- ── Split Layout ────────────────────────────────────── -->
+        <div id="splitLayout" class="split-layout">
+
+            <!-- Left: image previews (combined card) -->
+            <div class="col-images">
+                <div class="image-card" id="imageCard">
+                    <div class="card-title">
+                        <span>Images</span>
+                        <button class="btn-sm" id="expandBtn" onclick="toggleExpand()">⤢ Expand</button>
+                    </div>
+                    <div class="image-pair" id="imagePair">
+                        <div class="image-slot">
+                            <span class="slot-label">Original</span>
+                            <img id="originalPreview" src="" alt="Original image">
+                        </div>
+                        <div class="image-slot">
+                            <span class="slot-label">Annotated</span>
+                            <img id="processedPreview" src="" alt="Annotated image">
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <!-- Loading -->
-        <div id="loading" class="loading" style="display:none;">
-            Processing...
-        </div>
+            <!-- Right: analysis panels -->
+            <div class="col-analysis">
 
-        <!-- Dev Info Panel -->
-        <div id="infoPanel" class="info-panel" style="display:none;">
-            <h3>Dev Info</h3>
-            <div class="info-grid">
                 <!-- Resolution -->
-                <div class="info-row">
-                    <span class="info-label">Image Width</span>
-                    <span id="imgWidth" class="info-value">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Image Height</span>
-                    <span id="imgHeight" class="info-value">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Long Edge</span>
-                    <span id="longEdge" class="info-value">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Short Edge</span>
-                    <span id="shortEdge" class="info-value">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Resolution Adequate</span>
-                    <span id="resAdequate" class="info-value">—</span>
+                <div class="panel" id="panelResolution">
+                    <div class="panel-header">
+                        <span class="panel-icon">📐</span>
+                        <span class="panel-title">Resolution</span>
+                        <span id="badgeRes" class="panel-badge">—</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="data-row">
+                            <span class="data-label">Width</span>
+                            <span id="imgWidth" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Height</span>
+                            <span id="imgHeight" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Long Edge</span>
+                            <span id="longEdge" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Short Edge</span>
+                            <span id="shortEdge" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Adequate</span>
+                            <span id="resAdequate" class="data-value">—</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Card Detection -->
-                <div class="info-row">
-                    <span class="info-label">Card Detected</span>
-                    <span id="cardDetected" class="info-value">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Aspect Ratio Deviation</span>
-                    <span id="aspectDev" class="info-value">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Card Area Ratio</span>
-                    <span id="areaRatio" class="info-value">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Detection Confidence</span>
-                    <span id="cardConfidence" class="info-value">—</span>
+                <div class="panel" id="panelCard">
+                    <div class="panel-header">
+                        <span class="panel-icon">🪪</span>
+                        <span class="panel-title">Card Detection</span>
+                        <span id="badgeCard" class="panel-badge">—</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="data-row">
+                            <span class="data-label">Detected</span>
+                            <span id="cardDetected" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Confidence</span>
+                            <span id="cardConfidence" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Aspect Deviation</span>
+                            <span id="aspectDev" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Area Ratio</span>
+                            <span id="areaRatio" class="data-value">—</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Face Detection -->
-                <div class="info-row">
-                    <span class="info-label">Face Detected</span>
-                    <span id="faceDetected" class="info-value">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Face BBox</span>
-                    <span id="faceBbox" class="info-value">—</span>
-                </div>
-
-                <!-- Glare -->
-                <div class="info-row">
-                    <span class="info-label">Glare Detected</span>
-                    <span id="glareDetected" class="info-value">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Glare Area (%)</span>
-                    <span id="glareScore" class="info-value">—</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label">Glare on Face</span>
-                    <span id="glareOnFace" class="info-value">—</span>
+                <div class="panel" id="panelFace">
+                    <div class="panel-header">
+                        <span class="panel-icon">🧑</span>
+                        <span class="panel-title">Face Detection</span>
+                        <span id="badgeFace" class="panel-badge">—</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="data-row">
+                            <span class="data-label">Detected</span>
+                            <span id="faceDetected" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Bounding Box</span>
+                            <span id="faceBbox" class="data-value">—</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Blur / Focus -->
-                <div class="info-row">
-                    <span class="info-label">Blur Score (Global)</span>
-                    <span id="blurGlobal" class="info-value">—</span>
+                <div class="panel" id="panelBlur">
+                    <div class="panel-header">
+                        <span class="panel-icon">🔎</span>
+                        <span class="panel-title">Blur / Focus</span>
+                        <span id="badgeBlur" class="panel-badge">—</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="data-row">
+                            <span class="data-label">Global Score</span>
+                            <span id="blurGlobal" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Card Zone</span>
+                            <span id="blurCard" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Face Zone</span>
+                            <span id="blurFace" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Composite</span>
+                            <span id="blurComposite" class="data-value">—</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Blur Score (Card Zone)</span>
-                    <span id="blurCard" class="info-value">—</span>
+
+                <!-- Glare -->
+                <div class="panel" id="panelGlare">
+                    <div class="panel-header">
+                        <span class="panel-icon">☀️</span>
+                        <span class="panel-title">Glare</span>
+                        <span id="badgeGlare" class="panel-badge">—</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="data-row">
+                            <span class="data-label">Detected</span>
+                            <span id="glareDetected" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Card Area</span>
+                            <span id="glareScore" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">On Face</span>
+                            <span id="glareOnFace" class="data-value">—</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Blur Score (Face Zone)</span>
-                    <span id="blurFace" class="info-value">—</span>
+
+                <!-- Noise -->
+                <div class="panel" id="panelNoise">
+                    <div class="panel-header">
+                        <span class="panel-icon">🌫️</span>
+                        <span class="panel-title">Noise</span>
+                        <span id="badgeNoise" class="panel-badge">—</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="data-row">
+                            <span class="data-label">Detected</span>
+                            <span id="noiseDetected" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Card Level</span>
+                            <span id="noiseCard" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Face Level</span>
+                            <span id="noiseFace" class="data-value">—</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Blur Composite</span>
-                    <span id="blurComposite" class="info-value">—</span>
-                </div>
-            </div>
-            <!-- Error display -->
-            <div id="errorBox" class="error-box" style="display:none;"></div>
-        </div>
-    </div>
+
+                <!-- Error box spans full width -->
+                <div id="errorBox" class="error-box"></div>
+
+            </div><!-- /col-analysis -->
+        </div><!-- /split-layout -->
+
+    </div><!-- /app-shell -->
 
     <script>
         const dropZone = document.getElementById("dropZone");
+        const dropLabel = document.getElementById("dropLabel");
         const fileInput = document.getElementById("fileInput");
         const analyzeBtn = document.getElementById("analyzeBtn");
-        const imagePanel = document.getElementById("imagePanel");
-        const originalPreview = document.getElementById("originalPreview");
-        const processedPreview = document.getElementById("processedPreview");
-        const infoPanel = document.getElementById("infoPanel");
-        const loading = document.getElementById("loading");
+        const splitLayout = document.getElementById("splitLayout");
+        const originalPrev = document.getElementById("originalPreview");
+        const processedPrev = document.getElementById("processedPreview");
+        const loadingBar = document.getElementById("loadingBar");
         const errorBox = document.getElementById("errorBox");
 
         let selectedFile = null;
 
-        // --- Drag & Drop ---
-        dropZone.addEventListener("dragover", (e) => {
+        // ── Drag & Drop ───────────────────────────────────────────
+        dropZone.addEventListener("dragover", e => {
             e.preventDefault();
             dropZone.classList.add("drag-over");
         });
-
-        dropZone.addEventListener("dragleave", () => {
-            dropZone.classList.remove("drag-over");
-        });
-
-        dropZone.addEventListener("drop", (e) => {
+        dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+        dropZone.addEventListener("drop", e => {
             e.preventDefault();
             dropZone.classList.remove("drag-over");
-            if (e.dataTransfer.files.length > 0) {
-                handleFile(e.dataTransfer.files[0]);
-            }
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
         });
 
-        // --- Click to browse ---
         fileInput.addEventListener("change", () => {
-            if (fileInput.files.length > 0) {
-                handleFile(fileInput.files[0]);
-            }
+            if (fileInput.files.length > 0) handleFile(fileInput.files[0]);
         });
 
         function handleFile(file) {
@@ -174,135 +251,144 @@
             }
             selectedFile = file;
             analyzeBtn.disabled = false;
-            dropZone.querySelector("p").textContent = file.name;
+            dropLabel.textContent = "📎 " + file.name;
 
-            // Show original preview
             const reader = new FileReader();
-            reader.onload = (e) => {
-                originalPreview.src = e.target.result;
-                imagePanel.style.display = "flex";
-                processedPreview.src = "";
-                processedPreview.alt = "Will appear after analysis";
+            reader.onload = e => {
+                originalPrev.src = e.target.result;
+                processedPrev.src = "";
+                splitLayout.classList.add("visible");
             };
             reader.readAsDataURL(file);
 
-            // Reset info panel
-            infoPanel.style.display = "none";
             errorBox.style.display = "none";
         }
 
-        // --- Analyze ---
+        // ── Analyze ───────────────────────────────────────────────
         analyzeBtn.addEventListener("click", async () => {
             if (!selectedFile) return;
-
             analyzeBtn.disabled = true;
-            loading.style.display = "block";
+            loadingBar.style.display = "block";
             errorBox.style.display = "none";
 
             const formData = new FormData();
             formData.append("image", selectedFile);
 
             try {
-                const response = await fetch("/assess", {
-                    method: "POST",
-                    body: formData,
-                });
+                const resp = await fetch("/assess", { method: "POST", body: formData });
+                const data = await resp.json();
 
-                const data = await response.json();
+                if (data.error) { showError(data.error); return; }
 
-                if (data.error) {
-                    showError(data.error);
-                    return;
-                }
+                processedPrev.src = data.processed_image_url;
+                splitLayout.classList.add("visible");
 
-                // Show processed image
-                processedPreview.src = data.processed_image_url;
-
-                // --- Populate Resolution info ---
+                // ── Resolution ─────────────────────────────────────
                 const res = data.resolution;
                 setText("imgWidth", `${res.image_width} px`);
                 setText("imgHeight", `${res.image_height} px`);
                 setText("longEdge", `${res.long_edge} px`);
                 setText("shortEdge", `${res.short_edge} px`);
                 setStatus("resAdequate", res.resolution_adequate);
+                setBadge("badgeRes", res.resolution_adequate);
 
-                // --- Populate Card Detection info ---
+                // ── Card Detection ─────────────────────────────────
                 const card = data.card_detection;
                 setStatus("cardDetected", card.card_detected);
-                setText("aspectDev",
-                    card.aspect_ratio_deviation !== null
-                        ? card.aspect_ratio_deviation.toFixed(4)
-                        : "—"
-                );
-                setText("areaRatio",
-                    card.card_area_ratio !== null
-                        ? card.card_area_ratio.toFixed(4)
-                        : "—"
-                );
-                setText("cardConfidence",
-                    card.confidence != null
-                        ? card.confidence.toFixed(4)
-                        : "—"
-                );
+                setText("cardConfidence", card.confidence != null ? card.confidence.toFixed(4) : "—");
+                setText("aspectDev", card.aspect_ratio_deviation !== null ? card.aspect_ratio_deviation.toFixed(4) : "—");
+                setText("areaRatio", card.card_area_ratio !== null ? card.card_area_ratio.toFixed(4) : "—");
+                setBadge("badgeCard", card.card_detected);
 
-                // --- Populate Face detection info ---
+                // ── Face Detection ─────────────────────────────────
                 const fce = data.face;
                 setStatus("faceDetected", fce.detected);
-                setText("faceBbox",
-                    fce.bbox !== null
-                        ? `(${fce.bbox.join(", ")})`
-                        : "—"
-                );
+                setText("faceBbox", fce.bbox !== null ? `[${fce.bbox.join(", ")}]` : "—");
+                setBadge("badgeFace", fce.detected);
 
-                // --- Populate Glare info ---
+                // ── Blur ───────────────────────────────────────────
+                const blr = data.blur || {};
+                setText("blurGlobal", blr.blur_score_global != null ? blr.blur_score_global.toFixed(2) : "—");
+                setText("blurCard", blr.blur_score_card_zone != null ? blr.blur_score_card_zone.toFixed(2) : "—");
+                setText("blurFace", blr.blur_score_face_zone != null ? blr.blur_score_face_zone.toFixed(2) : "—");
+                setText("blurComposite", blr.blur_composite != null ? blr.blur_composite.toFixed(2) : "—");
+                // Higher composite = sharper. Threshold ~80 as "good".
+                setBadge("badgeBlur", blr.blur_composite != null ? blr.blur_composite > 80 : null);
+
+                // ── Glare ──────────────────────────────────────────
                 const glr = data.glare;
                 if (glr) {
-                    setIssueStatus("glareDetected", glr.glare_detected);
+                    setIssue("glareDetected", glr.glare_detected);
                     setText("glareScore", glr.glare_percentage != null ? glr.glare_percentage.toFixed(2) + "%" : "—");
-                    setIssueStatus("glareOnFace", glr.glare_on_face);
+                    setIssue("glareOnFace", glr.glare_on_face);
+                    setBadgeIssue("badgeGlare", glr.glare_detected);
                 }
 
-                // --- Populate Blur info ---
-                const blr = data.blur || {};
-                setText("blurGlobal", blr.blur_score_global != null
-                    ? blr.blur_score_global.toFixed(2) : "—");
-                setText("blurCard", blr.blur_score_card_zone != null
-                    ? blr.blur_score_card_zone.toFixed(2) : "—");
-                setText("blurFace", blr.blur_score_face_zone != null
-                    ? blr.blur_score_face_zone.toFixed(2) : "—");
-                setText("blurComposite", blr.blur_composite != null
-                    ? blr.blur_composite.toFixed(2) : "—");
-
-                infoPanel.style.display = "block";
+                // ── Noise ──────────────────────────────────────────
+                const ns = data.noise;
+                if (ns) {
+                    setIssue("noiseDetected", ns.noise_detected);
+                    setText("noiseCard", ns.noise_level_card != null ? ns.noise_level_card.toFixed(2) : "—");
+                    setText("noiseFace", ns.noise_level_face != null ? ns.noise_level_face.toFixed(2) : "—");
+                    setBadgeIssue("badgeNoise", ns.noise_detected);
+                }
 
             } catch (err) {
                 showError("Request failed: " + err.message);
             } finally {
-                loading.style.display = "none";
+                loadingBar.style.display = "none";
                 analyzeBtn.disabled = false;
             }
         });
 
+        // ── Expand toggle ─────────────────────────────────────────
+        let expanded = false;
+        function toggleExpand() {
+            expanded = !expanded;
+            const pair = document.getElementById("imagePair");
+            const btn = document.getElementById("expandBtn");
+            const card = document.getElementById("imageCard");
+            pair.classList.toggle("expanded", expanded);
+            btn.textContent = expanded ? "⤡ Collapse" : "⤢ Expand";
+            // When expanded, the image card needs full width
+            card.closest(".col-images").style.flex = expanded ? "1" : "0 0 340px";
+        }
+
+        // ── Helpers ───────────────────────────────────────────────
         function setText(id, text) {
             document.getElementById(id).textContent = text;
         }
 
+        /** Good = pass (green) */
         function setStatus(id, passed) {
             const el = document.getElementById(id);
             el.textContent = passed ? "YES" : "NO";
-            el.className = "info-value " + (passed ? "pass" : "fail");
+            el.className = "data-value " + (passed ? "pass" : "fail");
         }
 
-        function setIssueStatus(id, hasIssue) {
+        /** Issue present = fail (red) */
+        function setIssue(id, hasIssue) {
             const el = document.getElementById(id);
             el.textContent = hasIssue ? "YES" : "NO";
-            el.className = "info-value " + (hasIssue ? "fail" : "pass");
+            el.className = "data-value " + (hasIssue ? "fail" : "pass");
+        }
+
+        /** Header badge — good is pass */
+        function setBadge(id, passed) {
+            const el = document.getElementById(id);
+            if (passed === null || passed === undefined) { el.textContent = "—"; el.className = "panel-badge"; return; }
+            el.textContent = passed ? "PASS" : "FAIL";
+            el.className = "panel-badge " + (passed ? "badge-pass" : "badge-fail");
+        }
+
+        /** Header badge — issue present is fail */
+        function setBadgeIssue(id, hasIssue) {
+            setBadge(id, !hasIssue);
         }
 
         function showError(msg) {
             errorBox.textContent = msg;
             errorBox.style.display = "block";
-            infoPanel.style.display = "block";
         }
     </script>
 </body>

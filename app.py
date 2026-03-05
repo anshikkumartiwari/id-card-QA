@@ -56,6 +56,7 @@ def assess():
         "face": results["face"],
         "blur": results["blur"],
         "glare": results["glare"],
+        "noise": results["noise"],
         "processed_image_url": f"/temp/{filename}",
     }
 

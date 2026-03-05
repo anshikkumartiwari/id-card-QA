@@ -1,175 +1,399 @@
-/* ---------- Base ---------- */
-* {
+/* ── Google Fonts ─────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Reset & Base ─────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+:root {
+    --bg: #0e0f11;
+    --surface: #16181d;
+    --surface2: #1c1f26;
+    --border: #272b33;
+    --border-light: #343a45;
+    --accent: #4a7fa5;
+    --accent-glow: rgba(74, 127, 165, 0.12);
+    --pass: #3d9970;
+    --fail: #c0392b;
+    --warn: #d4860a;
+    --text: #dde1e9;
+    --muted: #5a6272;
+    --label: #8896a8;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+    --radius: 10px;
+    --radius-sm: 6px;
+}
+
 body {
-    background: #1a1a2e;
-    color: #e0e0e0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
     min-height: 100vh;
-    padding: 40px 20px;
+    padding: 28px 20px 48px;
 }
 
-.container {
-    max-width: 1100px;
+/* ── App Shell ────────────────────────────────────────────────── */
+.app-shell {
+    max-width: 1280px;
     margin: 0 auto;
-    text-align: center;
 }
 
-h1 {
-    font-size: 1.8rem;
-    margin-bottom: 30px;
-    color: #ffffff;
+/* ── Header ───────────────────────────────────────────────────── */
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
 }
 
-/* ---------- Drop Zone ---------- */
+.logo-chip {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 6px;
+}
+
+.app-header h1 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.3px;
+}
+
+.app-header .subtitle {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+/* ── Upload Row ───────────────────────────────────────────────── */
+.upload-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
 .drop-zone {
-    width: 450px;
-    height: 200px;
-    margin: 0 auto 20px;
-    border: 2px dashed #555;
-    border-radius: 12px;
+    flex: 1;
+    height: 72px;
+    border: 1.5px dashed var(--border-light);
+    border-radius: var(--radius);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: border-color 0.2s, background 0.2s;
+    background: var(--surface);
 }
 
 .drop-zone:hover,
 .drop-zone.drag-over {
-    border-color: #7c83ff;
-    background: rgba(124, 131, 255, 0.08);
+    border-color: var(--accent);
+    background: var(--accent-glow);
 }
 
 .drop-zone p {
-    color: #999;
-    font-size: 0.95rem;
-    line-height: 1.6;
+    color: var(--muted);
+    font-size: 0.88rem;
     text-align: center;
 }
 
-/* ---------- Button ---------- */
 .btn {
-    padding: 10px 36px;
-    font-size: 1rem;
+    height: 42px;
+    padding: 0 28px;
+    font-size: 0.9rem;
+    font-family: var(--sans);
+    font-weight: 600;
     border: none;
-    border-radius: 8px;
-    background: #7c83ff;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
     color: #fff;
     cursor: pointer;
-    margin-bottom: 30px;
-    transition: opacity 0.2s;
+    white-space: nowrap;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.2px;
+}
+
+.btn-sm {
+    height: 30px;
+    padding: 0 14px;
+    font-size: 0.75rem;
+    font-family: var(--sans);
+    font-weight: 500;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--label);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-sm:hover {
+    background: var(--surface2);
+    color: var(--text);
 }
 
 .btn:disabled {
-    opacity: 0.35;
+    opacity: 0.3;
     cursor: not-allowed;
 }
 
 .btn:hover:not(:disabled) {
-    opacity: 0.85;
+    opacity: 0.88;
+    transform: translateY(-1px);
 }
 
-/* ---------- Image Panel ---------- */
-.image-panel {
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* ── Loading ──────────────────────────────────────────────────── */
+.loading-bar {
+    display: none;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), #a78bfa, var(--accent));
+    background-size: 200%;
+    border-radius: 2px;
+    margin-bottom: 22px;
+    animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% center;
+    }
+
+    100% {
+        background-position: -200% center;
+    }
+}
+
+/* ── Main Split Layout ────────────────────────────────────────── */
+.split-layout {
+    display: none;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.split-layout.visible {
     display: flex;
-    justify-content: center;
-    gap: 30px;
-    flex-wrap: wrap;
-    margin-bottom: 30px;
 }
 
-.image-box {
-    text-align: center;
-}
-
-.image-box h3 {
-    margin-bottom: 10px;
-    font-size: 0.9rem;
-    color: #aaa;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.image-box img {
-    max-width: 500px;
-    max-height: 400px;
-    border-radius: 8px;
-    border: 1px solid #333;
-    object-fit: contain;
-    background: #111;
-}
-
-/* ---------- Loading ---------- */
-.loading {
-    color: #7c83ff;
-    font-size: 1rem;
-    margin-bottom: 20px;
-}
-
-/* ---------- Info Panel ---------- */
-.info-panel {
-    max-width: 500px;
-    margin: 0 auto;
-    text-align: left;
-    background: #16213e;
-    border: 1px solid #2a2a4a;
-    border-radius: 10px;
-    padding: 20px 24px;
-}
-
-.info-panel h3 {
-    font-size: 0.85rem;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 14px;
-}
-
-.info-grid {
+/* Left column — image previews stacked */
+.col-images {
     display: flex;
     flex-direction: column;
+    gap: 16px;
+    flex: 0 0 340px;
+    min-width: 0;
+}
+
+/* Right column — analysis panels grid */
+.col-analysis {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    align-content: start;
+}
+
+/* ── Image Card ───────────────────────────────────────────────── */
+.image-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.image-card .card-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+}
+
+/* Default: images stacked vertically */
+.image-pair {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--border);
+}
+
+/* Each image slot */
+.image-slot {
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.slot-label {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 5px 10px 4px;
+    background: var(--surface2);
+}
+
+.image-slot img {
+    width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    background: #080a0d;
+    display: block;
+}
+
+/* Expanded: side-by-side */
+.image-pair.expanded {
+    flex-direction: row;
+}
+
+.image-pair.expanded .image-slot {
+    flex: 1;
+    min-width: 0;
+}
+
+.image-pair.expanded .image-slot img {
+    max-height: 380px;
+}
+
+/* ── Analysis Panel ───────────────────────────────────────────── */
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+}
+
+.panel-icon {
+    font-size: 0.95rem;
+    flex-shrink: 0;
+}
+
+.panel-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text);
+}
+
+.panel-badge {
+    margin-left: auto;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: var(--border-light);
+    color: var(--muted);
+}
+
+.panel-badge.badge-pass {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--pass);
+}
+
+.panel-badge.badge-fail {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--fail);
+}
+
+.panel-body {
+    flex: 1;
+    padding: 4px 0;
+}
+
+/* ── Data Rows ────────────────────────────────────────────────── */
+.data-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 14px;
+    border-bottom: 1px solid var(--border);
     gap: 8px;
 }
 
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 6px 0;
-    border-bottom: 1px solid #1f2b47;
-    font-family: "SF Mono", "Fira Code", "Consolas", monospace;
-    font-size: 0.88rem;
+.data-row:last-child {
+    border-bottom: none;
 }
 
-.info-label {
-    color: #aaa;
+.data-label {
+    font-size: 0.8rem;
+    color: var(--label);
+    flex-shrink: 0;
 }
 
-.info-value {
-    font-weight: 600;
-    color: #e0e0e0;
+.data-value {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text);
+    text-align: right;
+    word-break: break-all;
 }
 
-.info-value.pass {
-    color: #4caf50;
+.data-value.pass {
+    color: var(--pass);
 }
 
-.info-value.fail {
-    color: #f44336;
+.data-value.fail {
+    color: var(--fail);
 }
 
-/* ---------- Error ---------- */
+.data-value.warn {
+    color: var(--warn);
+}
+
+/* ── Error Box ────────────────────────────────────────────────── */
 .error-box {
-    margin-top: 14px;
+    display: none;
+    margin: 14px;
     padding: 10px 14px;
-    background: rgba(244, 67, 54, 0.12);
-    border: 1px solid #f44336;
-    border-radius: 6px;
-    color: #f44336;
-    font-family: monospace;
-    font-size: 0.85rem;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid var(--fail);
+    border-radius: var(--radius-sm);
+    color: var(--fail);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+}
+
+/* ── Span full width for a panel ──────────────────────────────── */
+.panel.span-2 {
+    grid-column: span 2;
 }
