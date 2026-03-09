@@ -398,7 +398,16 @@
                 if (geom) {
                     setText("geomRatio", geom.aspect_ratio != null ? geom.aspect_ratio.toFixed(3) : "—");
                     setStatus("geomValid", geom.is_ratio_valid);
-                    setIssue("geomRotation", geom.rotation_detected);
+
+                    const rotEl = document.getElementById("geomRotation");
+                    if (geom.rotation_degrees != null) {
+                        rotEl.textContent = geom.rotation_degrees.toFixed(1) + "°";
+                        rotEl.className = "data-value " + (geom.rotation_detected ? "fail" : "pass");
+                    } else {
+                        rotEl.textContent = "—";
+                        rotEl.className = "data-value";
+                    }
+
                     setBadge("badgeGeometry", geom.geometry_adequate);
                 }
 
