@@ -58,6 +58,7 @@ def assess():
         "glare": results["glare"],
         "noise": results["noise"],
         "exposure": results["exposure"],
+        "geometry": results["geometry"],
         "processed_image_url": f"/temp/{filename}",
     }
 

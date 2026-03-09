@@ -231,6 +231,29 @@
                     </div>
                 </div>
 
+                <!-- Geometry -->
+                <div class="panel" id="panelGeometry">
+                    <div class="panel-header">
+                        <span class="panel-icon">📐</span>
+                        <span class="panel-title">Geometry</span>
+                        <span id="badgeGeometry" class="panel-badge">—</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="data-row">
+                            <span class="data-label">Aspect Ratio</span>
+                            <span id="geomRatio" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Valid Ratio</span>
+                            <span id="geomValid" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Rotation</span>
+                            <span id="geomRotation" class="data-value">—</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Error box spans full width -->
                 <div id="errorBox" class="error-box"></div>
 
@@ -368,6 +391,15 @@
                     elStatus.className = "data-value " + (exp.exposure_adequate ? "pass" : "fail");
 
                     setBadge("badgeExposure", exp.exposure_adequate);
+                }
+
+                // ── Geometry ───────────────────────────────────────
+                const geom = data.geometry;
+                if (geom) {
+                    setText("geomRatio", geom.aspect_ratio != null ? geom.aspect_ratio.toFixed(3) : "—");
+                    setStatus("geomValid", geom.is_ratio_valid);
+                    setIssue("geomRotation", geom.rotation_detected);
+                    setBadge("badgeGeometry", geom.geometry_adequate);
                 }
 
             } catch (err) {

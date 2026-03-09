@@ -9,7 +9,7 @@ collects results into a flags dict, and returns everything to app.py.
 import cv2
 import numpy as np
 
-from modules import resolution, card_detection, face, blur, glare, noise, exposure
+from modules import resolution, card_detection, face, blur, glare, noise, exposure, geometry
 
 
 def _extract_card_region(image_bgr: np.ndarray, quad: list) -> np.ndarray:
@@ -123,6 +123,9 @@ def run_pipeline(image_bgr: np.ndarray) -> dict:
     # ── Step 9: Exposure analysis ─────────────────────────────────────
     exposure_result = exposure.analyze(image_bgr, card_quad=card_quad, face_bbox=face_bbox)
 
+    # ── Step 10: Geometry analysis ────────────────────────────────────
+    geometry_result = geometry.analyze(card_quad=card_quad)
+
     # ── Compile flags ─────────────────────────────────────────────────
     return {
         "resolution": res_result,
@@ -132,5 +135,6 @@ def run_pipeline(image_bgr: np.ndarray) -> dict:
         "glare": glare_result,
         "noise": noise_result,
         "exposure": exposure_result,
+        "geometry": geometry_result,
         "annotated_image": annotated,
     }
