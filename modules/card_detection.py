@@ -27,7 +27,7 @@ from itertools import combinations
 THRESHOLDS = {
     "expected_aspect_ratio": 89.5 / 54.0,  # ~1.657  (long / short)
     "aspect_ratio_tolerance": 0.55,
-    "min_area_ratio": 0.015,      # card ≥ 1.5 % of frame
+    "min_area_ratio": 0.30,      # card ≥ 1.5 % of frame
     "max_area_ratio": 0.98,       # card < 98 % of frame
     "score_accept": 0.40,         # minimum composite score
     "min_angle_deg": 60.0,        # each interior angle ≥ 60°

@@ -7,6 +7,7 @@
     <title>ID Card QA — Quality Assessment</title>
     <meta name="description" content="AI-powered ID card image quality assessment tool.">
     <link rel="stylesheet" href="/static/index.css">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
 </head>
 
 <body>
@@ -207,6 +208,29 @@
                     </div>
                 </div>
 
+                <!-- Exposure -->
+                <div class="panel" id="panelExposure">
+                    <div class="panel-header">
+                        <span class="panel-icon">💡</span>
+                        <span class="panel-title">Exposure</span>
+                        <span id="badgeExposure" class="panel-badge">—</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="data-row">
+                            <span class="data-label">Status</span>
+                            <span id="expStatus" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Card Brightness</span>
+                            <span id="expCard" class="data-value">—</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Face Brightness</span>
+                            <span id="expFace" class="data-value">—</span>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Error box spans full width -->
                 <div id="errorBox" class="error-box"></div>
 
@@ -331,6 +355,19 @@
                     setText("noiseCard", ns.noise_level_card != null ? ns.noise_level_card.toFixed(2) : "—");
                     setText("noiseFace", ns.noise_level_face != null ? ns.noise_level_face.toFixed(2) : "—");
                     setBadgeIssue("badgeNoise", ns.noise_detected);
+                }
+
+                // ── Exposure ───────────────────────────────────────
+                const exp = data.exposure;
+                if (exp) {
+                    setText("expStatus", exp.status.toUpperCase());
+                    setText("expCard", exp.mean_brightness_card != null ? exp.mean_brightness_card.toFixed(2) : "—");
+                    setText("expFace", exp.mean_brightness_face != null ? exp.mean_brightness_face.toFixed(2) : "—");
+
+                    const elStatus = document.getElementById("expStatus");
+                    elStatus.className = "data-value " + (exp.exposure_adequate ? "pass" : "fail");
+
+                    setBadge("badgeExposure", exp.exposure_adequate);
                 }
 
             } catch (err) {
