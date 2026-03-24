@@ -9,3 +9,4 @@ temp/
 env/
 venv/
 .vscode/
+*.db

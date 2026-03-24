@@ -255,7 +255,14 @@
                 </div>
 
                 <!-- Error box spans full width -->
-                <div id="errorBox" class="error-box"></div>
+                <div id="errorBox" class="error-box span-2"></div>
+
+                <!-- Global Submit Feedback -->
+                <div id="submitFeedbackContainer" class="panel span-2" style="display: none; padding: 14px; text-align: center; border: 1px dashed var(--accent);">
+                    <p style="margin-bottom: 10px; font-size: 0.85rem; color: var(--text);">Select any incorrect predictions above, then click submit to improve the model.</p>
+                    <button id="submitFeedbackBtn" class="btn" style="width: 100%; max-width: 300px; background: #3498db; color: white;">Submit Feedback</button>
+                    <div id="feedbackStatus" style="margin-top: 8px; font-size: 0.8rem; color: var(--pass);"></div>
+                </div>
 
             </div><!-- /col-analysis -->
         </div><!-- /split-layout -->
@@ -274,6 +281,72 @@
         const errorBox = document.getElementById("errorBox");
 
         let selectedFile = null;
+        let currentAssessmentId = null;
+        let selectedAttributes = new Set();
+        
+        const attrMapping = [
+            { id: "panelResolution", attr: "resolution" },
+            { id: "panelCard", attr: "card" },
+            { id: "panelFace", attr: "face" },
+            { id: "panelBlur", attr: "blur" },
+            { id: "panelGlare", attr: "glare" },
+            { id: "panelNoise", attr: "noise" },
+            { id: "panelExposure", attr: "exposure" },
+            { id: "panelGeometry", attr: "geometry" }
+        ];
+
+        // ── Init Attribute Feedback Buttons ──────────────────────
+        attrMapping.forEach(m => {
+            const panel = document.getElementById(m.id);
+            if (panel) {
+                const header = panel.querySelector(".panel-header");
+                const badge = panel.querySelector(".panel-badge");
+                
+                // Wrap badge and button
+                const container = document.createElement("div");
+                container.style.marginLeft = "auto";
+                container.style.display = "flex";
+                container.style.flexDirection = "column";
+                container.style.alignItems = "flex-end";
+                container.style.gap = "4px";
+                
+                header.insertBefore(container, badge);
+                container.appendChild(badge);
+                badge.style.marginLeft = "0"; // Override auto margins
+                
+                const btn = document.createElement("button");
+                btn.className = "btn-wrong";
+                btn.textContent = "Wrong?";
+                btn.style.display = "none";
+                btn.style.fontSize = "0.7rem";
+                btn.style.padding = "2px 8px";
+                btn.style.background = "transparent";
+                btn.style.color = "#e74c3c";
+                btn.style.border = "1px solid #e74c3c";
+                btn.style.borderRadius = "4px";
+                btn.style.cursor = "pointer";
+                btn.style.fontWeight = "600";
+                btn.style.transition = "all 0.2s";
+                
+                btn.onclick = () => {
+                    const isSelected = selectedAttributes.has(m.attr);
+                    if (isSelected) {
+                        selectedAttributes.delete(m.attr);
+                        btn.style.background = "transparent";
+                        btn.style.color = "#e74c3c";
+                        btn.textContent = "Wrong?";
+                    } else {
+                        selectedAttributes.add(m.attr);
+                        btn.style.background = "#e74c3c";
+                        btn.style.color = "white";
+                        btn.textContent = "Wrong ❌";
+                    }
+                };
+                
+                container.appendChild(btn);
+                m.btn = btn;
+            }
+        });
 
         // ── Drag & Drop ───────────────────────────────────────────
         dropZone.addEventListener("dragover", e => {
@@ -326,6 +399,27 @@
                 const data = await resp.json();
 
                 if (data.error) { showError(data.error); return; }
+
+                currentAssessmentId = data.assessment_id;
+                selectedAttributes.clear();
+                
+                document.getElementById("submitFeedbackContainer").style.display = "block";
+                const submitBtn = document.getElementById("submitFeedbackBtn");
+                submitBtn.style.background = "#3498db";
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit Feedback";
+                document.getElementById("feedbackStatus").textContent = "";
+                
+                // Show the wrong buttons and reset them
+                attrMapping.forEach(m => {
+                    if (m.btn) {
+                        m.btn.style.display = "block";
+                        m.btn.disabled = false;
+                        m.btn.textContent = "Wrong?";
+                        m.btn.style.background = "transparent";
+                        m.btn.style.color = "#e74c3c";
+                    }
+                });
 
                 processedPrev.src = data.processed_image_url;
                 splitLayout.classList.add("visible");
@@ -418,6 +512,49 @@
                 analyzeBtn.disabled = false;
             }
         });
+
+        const submitFeedbackBtn = document.getElementById("submitFeedbackBtn");
+        submitFeedbackBtn.onclick = async () => {
+            if (!currentAssessmentId) return;
+            if (selectedAttributes.size === 0) {
+                document.getElementById("feedbackStatus").textContent = "Please select at least one incorrect attribute before submitting.";
+                document.getElementById("feedbackStatus").style.color = "var(--warn)";
+                return;
+            }
+            
+            submitFeedbackBtn.disabled = true;
+            submitFeedbackBtn.textContent = "Submitting...";
+            document.getElementById("feedbackStatus").textContent = "";
+            
+            try {
+                const resp = await fetch("/feedback", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ 
+                        assessment_id: currentAssessmentId, 
+                        attributes: Array.from(selectedAttributes) 
+                    })
+                });
+                const data = await resp.json();
+                
+                if (data.success) {
+                    submitFeedbackBtn.textContent = "Feedback Submitted ✓";
+                    submitFeedbackBtn.style.background = "#2ecc71";
+                    document.getElementById("feedbackStatus").textContent = `Successfully reported ${selectedAttributes.size} attribute(s).`;
+                    document.getElementById("feedbackStatus").style.color = "var(--pass)";
+                } else {
+                    submitFeedbackBtn.textContent = "Submit Feedback";
+                    submitFeedbackBtn.disabled = false;
+                    document.getElementById("feedbackStatus").textContent = "Failed to submit feedback.";
+                    document.getElementById("feedbackStatus").style.color = "var(--fail)";
+                }
+            } catch (err) {
+                submitFeedbackBtn.textContent = "Submit Feedback";
+                submitFeedbackBtn.disabled = false;
+                document.getElementById("feedbackStatus").textContent = "Error: " + err.message;
+                document.getElementById("feedbackStatus").style.color = "var(--fail)";
+            }
+        };
 
         // ── Expand toggle ─────────────────────────────────────────
         let expanded = false;
