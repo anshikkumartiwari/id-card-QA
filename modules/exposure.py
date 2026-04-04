@@ -53,10 +53,8 @@ def analyze(image_bgr: np.ndarray, card_quad=None, face_bbox=None) -> dict:
         
     if region is None or region.size == 0:
         return {
-            "exposure_adequate": False,
             "mean_brightness_card": 0.0,
-            "mean_brightness_face": 0.0,
-            "status": "unknown"
+            "mean_brightness_face": 0.0
         }
 
     # Convert to grayscale to evaluate brightness
@@ -83,21 +81,7 @@ def analyze(image_bgr: np.ndarray, card_quad=None, face_bbox=None) -> dict:
         # fallback to general card brightness if face is not found
         mean_brightness_face = mean_brightness_card
         
-    # Determine exposure status based on typical brightness thresholds
-    # ~0 = black, ~255 = white
-    if mean_brightness_card < 60:
-        status = "underexposed"
-        exposure_adequate = False
-    elif mean_brightness_card > 210:
-        status = "overexposed"
-        exposure_adequate = False
-    else:
-        status = "good"
-        exposure_adequate = True
-
     return {
-        "exposure_adequate": exposure_adequate,
         "mean_brightness_card": round(float(mean_brightness_card), 2),
-        "mean_brightness_face": round(float(mean_brightness_face), 2),
-        "status": status
+        "mean_brightness_face": round(float(mean_brightness_face), 2)
     }

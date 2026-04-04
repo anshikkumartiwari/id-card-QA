@@ -30,7 +30,6 @@ def detect_face(gray_card: np.ndarray) -> dict:
 
     if len(faces) == 0:
         return {
-            "detected": False,
             "bbox": None,
             "confidence": 0.0
         }
@@ -42,7 +41,6 @@ def detect_face(gray_card: np.ndarray) -> dict:
     confidence = 0.95
 
     return {
-        "detected": True,
         "bbox": (int(x), int(y), int(x + rw), int(y + rh)),
         "confidence": float(confidence)
     }

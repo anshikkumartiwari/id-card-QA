@@ -9,6 +9,7 @@ collects results into a flags dict, and returns everything to app.py.
 import cv2
 import numpy as np
 
+from config import THRESHOLDS
 from modules import resolution, card_detection, face, blur, glare, noise, exposure, geometry
 
 
@@ -65,9 +66,17 @@ def run_pipeline(image_bgr: np.ndarray) -> dict:
 
     # ── Step 1: Resolution check ──────────────────────────────────────
     res_result = resolution.analyze(image_bgr)
+    res_result["resolution_adequate"] = bool(
+        res_result["long_edge"] >= THRESHOLDS["min_long_edge"]
+        and res_result["short_edge"] >= THRESHOLDS["min_short_edge"]
+    )
 
     # ── Step 2: Card detection ────────────────────────────────────────
     card_result = card_detection.detect(image_bgr)
+    card_score = card_result.get("confidence")
+    if card_score is None:
+        card_score = -1.0
+    card_result["card_detected"] = bool(card_score >= THRESHOLDS["min_detection_score"])
 
     # ── Step 3: Annotated image ───────────────────────────────────────
     if card_result["card_detected"]:
@@ -87,6 +96,7 @@ def run_pipeline(image_bgr: np.ndarray) -> dict:
 
     # ── Step 5: Face detection ────────────────────────────────────────
     face_result = face.detect_face(gray_card)
+    face_result["detected"] = bool(face_result["bbox"] is not None)
 
     # Draw face bbox on the annotated image if detected
     if face_result["detected"] and face_result["bbox"] is not None:
@@ -116,15 +126,58 @@ def run_pipeline(image_bgr: np.ndarray) -> dict:
 
     # ── Step 7: Glare analysis ────────────────────────────────────────
     glare_result = glare.analyze(image_bgr, card_quad=card_quad, face_bbox=face_bbox)
+    glare_result["glare_detected"] = bool(glare_result["glare_percentage"] > THRESHOLDS["glare_max_percentage"])
+    glare_result["glare_on_face"] = bool(glare_result["glare_percentage_face"] > THRESHOLDS["glare_max_percentage"])
 
     # ── Step 8: Noise analysis ────────────────────────────────────────
     noise_result = noise.analyze(image_bgr, card_quad=card_quad, face_bbox=face_bbox)
+    noise_result["noise_detected"] = bool(
+        noise_result["noise_level_card"] > THRESHOLDS["noise_max_level"] or
+        noise_result["noise_level_face"] > THRESHOLDS["noise_max_level"]
+    )
 
     # ── Step 9: Exposure analysis ─────────────────────────────────────
     exposure_result = exposure.analyze(image_bgr, card_quad=card_quad, face_bbox=face_bbox)
+    mbc = exposure_result.get("mean_brightness_card", 0.0)
+    if mbc < THRESHOLDS["exposure_min_brightness"]:
+        exposure_result["status"] = "underexposed"
+        exposure_result["exposure_adequate"] = False
+    elif mbc > THRESHOLDS["exposure_max_brightness"]:
+        exposure_result["status"] = "overexposed"
+        exposure_result["exposure_adequate"] = False
+    else:
+        exposure_result["status"] = "good"
+        exposure_result["exposure_adequate"] = True
 
     # ── Step 10: Geometry analysis ────────────────────────────────────
     geometry_result = geometry.analyze(card_quad=card_quad)
+    
+    aspect_ratio = geometry_result.get("aspect_ratio", 0.0)
+    expected_ratio = THRESHOLDS["geometry_aspect_ratio_expected"]
+    tol = THRESHOLDS["geometry_aspect_ratio_tolerance"]
+    is_ratio_valid = bool(abs(aspect_ratio - expected_ratio) <= tol)
+    
+    rot = geometry_result.get("rotation_degrees", 0.0)
+    rotation_detected = bool(rot > THRESHOLDS["geometry_max_rotation_degrees"])
+    
+    wd_ratio = geometry_result.get("width_diff_ratio", 0.0)
+    hd_ratio = geometry_result.get("height_diff_ratio", 0.0)
+    max_persp = THRESHOLDS["geometry_max_perspective_distortion"]
+    perspective_distortion = bool(wd_ratio > max_persp or hd_ratio > max_persp)
+    
+    geometry_result["is_ratio_valid"] = is_ratio_valid
+    geometry_result["rotation_detected"] = rotation_detected
+    
+    msg = "Good geometry."
+    if not is_ratio_valid:
+        msg = f"Aspect ratio ({aspect_ratio:.2f}) deviates from expected {expected_ratio:.2f}."
+    elif rotation_detected:
+        msg = f"Card is rotated by ~{rot}°."
+    elif perspective_distortion:
+        msg = "Significant perspective 3D distortion detected."
+        
+    geometry_result["message"] = msg
+    geometry_result["geometry_adequate"] = bool(is_ratio_valid and not rotation_detected and not perspective_distortion)
 
     # ── Compile flags ─────────────────────────────────────────────────
     return {

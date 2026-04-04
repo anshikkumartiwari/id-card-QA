@@ -54,9 +54,7 @@ def analyze(image_bgr: np.ndarray, card_quad=None, face_bbox=None) -> dict:
         
     if region is None or region.size == 0:
         return {
-            "glare_detected": False,
             "glare_percentage": 0.0,
-            "glare_on_face": False,
             "glare_percentage_face": 0.0
         }
 
@@ -77,11 +75,6 @@ def analyze(image_bgr: np.ndarray, card_quad=None, face_bbox=None) -> dict:
     
     glare_percentage = (glare_pixels / float(total_pixels)) * 100.0 if total_pixels > 0 else 0.0
     
-    # If any pixel in the card area is glare, we flag it. 
-    glare_detected = bool(glare_percentage > 0.0)
-    
-    # Calculate glare on face if bbox is provided
-    glare_on_face = False
     glare_percentage_face = 0.0
     
     if face_bbox is not None:
@@ -99,11 +92,7 @@ def analyze(image_bgr: np.ndarray, card_quad=None, face_bbox=None) -> dict:
             total_face_pixels = face_mask.size
             if total_face_pixels > 0:
                 glare_percentage_face = (face_pixels / float(total_face_pixels)) * 100.0
-                glare_on_face = bool(glare_percentage_face > 0.0)
-    
     return {
-        "glare_detected": glare_detected,
         "glare_percentage": round(glare_percentage, 4),
-        "glare_on_face": glare_on_face,
         "glare_percentage_face": round(glare_percentage_face, 4)
     }

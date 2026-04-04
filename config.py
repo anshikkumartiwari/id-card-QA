@@ -32,6 +32,16 @@ THRESHOLDS = {
 
     # Final detection gating
     "min_detection_score": 0.45,
+
+    # QA Attribute Thresholds Centralized
+    "glare_max_percentage": 0.0,
+    "noise_max_level": 5.0,
+    "exposure_min_brightness": 60,
+    "exposure_max_brightness": 210,
+    "geometry_aspect_ratio_expected": 1.657,
+    "geometry_aspect_ratio_tolerance": 0.10,
+    "geometry_max_rotation_degrees": 5.0,
+    "geometry_max_perspective_distortion": 0.15,
 }
 
 TEMP_FOLDER = "temp"

@@ -98,13 +98,8 @@ def analyze(image_bgr: np.ndarray, card_quad=None, face_bbox=None) -> dict:
         if face_crop is not None and face_crop.size > 0:
             noise_face = _estimate_noise(face_crop)
 
-    # Threshold for what is considered "noisy" (needs empirical tuning)
-    # A residual mean > 5.0 is often visibly noisy
-    noise_detected = bool(noise_card > 5.0 or noise_face > 5.0)
-
     return {
         "noise_level_global": round(noise_global, 4),
         "noise_level_card": round(noise_card, 4),
-        "noise_level_face": round(noise_face, 4),
-        "noise_detected": noise_detected
+        "noise_level_face": round(noise_face, 4)
     }

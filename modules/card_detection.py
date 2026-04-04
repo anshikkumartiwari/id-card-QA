@@ -1,20 +1,3 @@
-"""
-card_detect.py — Enhanced ID-card quadrilateral detector with structural color validation.
-
-Detection pipeline:
-  1. Aggressive image downscaling (multiple scales)
-  2. Multi-channel preprocessing (gray, V, S, L, CLAHE)
-  3. Multi-strategy edge detection (Canny, Sobel, Scharr, Laplacian)
-  4. **NEW: Color-based segmentation (blue band + white card body)**
-  5. Morphological consolidation
-  6. Contour extraction with area filtering
-  7. Ramer–Douglas–Peucker polygon approximation (multi-epsilon)
-  8. Geometry heuristics (4 corners, convexity, angles, area, aspect ratio)
-  9. **NEW: Structural validation (blue bottom band + white side margins)**
- 10. Perspective / homography validation
- 11. Hough-line intersection fallback
- 12. Best-candidate selection via composite score
-"""
 
 import cv2
 import numpy as np
@@ -129,7 +112,7 @@ def _validate_quad_geometry(pts, img_w, img_h):
         if a < THRESHOLDS["min_angle_deg"] or a > THRESHOLDS["max_angle_deg"]:
             return False
 
-    # Aspect ratio check (generous for perspective)
+    # Aspect ratio check
     tl, tr, br, bl = pts
     w1 = np.linalg.norm(tr - tl)
     w2 = np.linalg.norm(br - bl)
@@ -334,10 +317,7 @@ def _detect_blue_band_region(image_bgr):
 
 
 def _detect_white_card_region(image_bgr):
-    """
-    NEW: Color-based segmentation to find white/light regions (card body).
-    Returns a binary mask.
-    """
+    
     gray = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2GRAY)
     hsv = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2HSV)
     
@@ -822,8 +802,8 @@ def detect(image_bgr):
                     best_score = sc
                     best_quad = (quad * scale).astype(np.float32)
 
-    # Final decision
-    if best_quad is not None and best_score >= THRESHOLDS["score_accept"]:
+    # Return best candidate found unconditionally
+    if best_quad is not None:
         quad_int = best_quad.astype(int)
         quad_int[:, 0] = np.clip(quad_int[:, 0], 0, orig_w - 1)
         quad_int[:, 1] = np.clip(quad_int[:, 1], 0, orig_h - 1)
@@ -841,7 +821,6 @@ def detect(image_bgr):
         card_area_ratio = round(float(card_area) / float(orig_w * orig_h), 4)
 
         return {
-            "card_detected": True,
             "quadrilateral": quad_int.tolist(),
             "aspect_ratio_deviation": round(float(deviation), 4),
             "card_area_ratio": card_area_ratio,
@@ -853,7 +832,6 @@ def detect(image_bgr):
 
 def _empty_result():
     return {
-        "card_detected": False,
         "quadrilateral": None,
         "aspect_ratio_deviation": None,
         "card_area_ratio": None,
@@ -925,14 +903,4 @@ if __name__ == "__main__":
     result = detect(img)
     print(result)
 
-    if result["card_detected"]:
-        out = draw_bounding_box(img, result["quadrilateral"], result.get("confidence"))
-        cv2.imwrite("detected_output.jpg", out)
-        print("Saved: detected_output.jpg")
-
-        warped = extract_card(img, result["quadrilateral"])
-        if warped is not None:
-            cv2.imwrite("card_extracted.jpg", warped)
-            print("Saved: card_extracted.jpg")
-    else:
-        print("No card detected.")
+    # Removed standalone test outputs because card_detected logic is removed from detect()

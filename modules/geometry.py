@@ -24,11 +24,10 @@ def analyze(card_quad: list) -> dict:
     """
     if card_quad is None or len(card_quad) != 4:
         return {
-            "geometry_adequate": False,
             "aspect_ratio": 0.0,
-            "is_ratio_valid": False,
-            "rotation_detected": False,
-            "message": "Card not detected or invalid quad."
+            "rotation_degrees": 0.0,
+            "width_diff_ratio": 0.0,
+            "height_diff_ratio": 0.0
         }
 
     pts = np.array(card_quad, dtype="float32")
@@ -45,11 +44,10 @@ def analyze(card_quad: list) -> dict:
 
     if height == 0 or width == 0:
         return {
-            "geometry_adequate": False,
             "aspect_ratio": 0.0,
-            "is_ratio_valid": False,
-            "rotation_detected": False,
-            "message": "Invalid card dimensions (zero)."
+            "rotation_degrees": 0.0,
+            "width_diff_ratio": 0.0,
+            "height_diff_ratio": 0.0
         }
 
     # ID cards are typically landscape (width > height)
@@ -59,10 +57,7 @@ def analyze(card_quad: list) -> dict:
     
     aspect_ratio = long_edge / short_edge
     
-    expected_ratio = 89.5 / 54.0  # ~1.657
-    tolerance = 0.10 # Stricter tolerance for aspect ratio
-
-    is_ratio_valid = bool(abs(aspect_ratio - expected_ratio) <= tolerance)
+    aspect_ratio = long_edge / short_edge
 
     # Calculate 2D in-plane rotation angle (tilt)
     edges = [
@@ -91,29 +86,13 @@ def analyze(card_quad: list) -> dict:
         
     rotation_degrees = round(float(tilt), 1)
     
-    # Consider > 5.0 degrees as significant rotation
-    rotation_detected = bool(rotation_degrees > 5.0)
-
     # Perspective check
     width_diff_ratio = float(abs(width_top - width_bot) / max(width_top, width_bot))
     height_diff_ratio = float(abs(height_left - height_right) / max(height_left, height_right))
-    perspective_distortion = bool(width_diff_ratio > 0.15 or height_diff_ratio > 0.15)
-
-    message = "Good geometry."
-    if not is_ratio_valid:
-        message = f"Aspect ratio ({aspect_ratio:.2f}) deviates from expected {expected_ratio:.2f}."
-    elif rotation_detected:
-        message = f"Card is rotated by ~{rotation_degrees}°."
-    elif perspective_distortion:
-        message = "Significant perspective 3D distortion detected."
-
-    geometry_adequate = bool(is_ratio_valid and not rotation_detected and not perspective_distortion)
 
     return {
-        "geometry_adequate": geometry_adequate,
         "aspect_ratio": round(float(aspect_ratio), 3),
-        "is_ratio_valid": is_ratio_valid,
         "rotation_degrees": rotation_degrees,
-        "rotation_detected": rotation_detected,
-        "message": message
+        "width_diff_ratio": round(width_diff_ratio, 4),
+        "height_diff_ratio": round(height_diff_ratio, 4)
     }
